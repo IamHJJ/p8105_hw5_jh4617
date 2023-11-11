@@ -1,0 +1,66 @@
+---
+title: "p8105_hw5_jh4617"
+author: "Junjie Hu"
+date: "2023-11-11"
+output: github_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r echo = FALSE}
+library(tidyverse)
+```
+
+# Problem 1
+
+## Imported data, created `city_state` variable
+```{r}
+homicide_df =
+  read.csv("homicide-data.csv")|>
+  janitor::clean_names() |>
+  mutate(city_state = paste(city, state, sep = ","))
+```
+
+The raw data obtains `r nrow(homicide_df)` observations and `r ncol(homicide_df)` variables, including `r names(homicide_df)`.
+
+## Summarized with cities
+```{r}
+homicide_df |>
+  group_by(city) |>
+  summarize(n = n()) |>
+  knitr::kable()
+
+homicide_df |>
+  filter(disposition %in% c ("Closed without arrest", "Open/No arrest")) |>
+  group_by(city) |>
+  summarize(n = n()) |>
+  knitr::kable()
+```
+
+## Estimated the proportion of homicide that are unsolved
+```{r}
+baltimore_homicide_df =
+  homicide_df |>
+  filter(city_state == "Baltimore,MD") |>
+  summarize(unsolved = sum(disposition %in% c("Closed without arrest", "Open/No arrest")),
+            total = n()) 
+
+prop.test(baltimore_homicide_df$unsolved, baltimore_homicide_df$total)
+  
+
+
+CI = function(p, n) {
+ 
+  se = sqrt(p * (1 - p ) / n)
+  CI_lower = p - 1.96 * se
+  CI_upper = p + 1.96 * se
+  
+  tibble(
+  CI_lower,
+  CI_upper
+  )
+}
+
+CI(p = 0.6455607, n = 2827)
+```
+
