@@ -9,6 +9,8 @@ editor_options:
 
 ```{r echo = FALSE}
 library(tidyverse)
+library(purrr)
+library(rvest)
 ```
 
 # Problem 1
@@ -39,28 +41,53 @@ homicide_df |>
 
 ## Estimated the proportion of homicide that are unsolved
 ```{r}
-baltimore_homicide_df =
-  homicide_df |>
+
+homicide_df |>
   filter(city_state == "Baltimore,MD") |>
   summarize(unsolved = sum(disposition %in% c("Closed without arrest", "Open/No arrest")),
-            total = n()) 
+            total = n()) %>%
+  {prop.test(.$unsolved, .$total)} |>
+  broom::tidy()
 
-prop.test(baltimore_homicide_df$unsolved, baltimore_homicide_df$total)
+```
+
+## Proportion for each cities
+```{r}
+homicide_df |>
+  group_by(city) |>
+  summarize(unsolved = sum(disposition %in% c("Closed without arrest", "Open/No arrest")),
+            total = n()) %>%
+  {prop.test(.$unsolved, .$total)} |>
+  broom::tidy()
+```
+
+
+# Problem 2
+```{r}
+
+file_list = 
+  list.files(path = "data", full.names = TRUE) 
+
+load_files = function(x){
   
-
-
-CI = function(p, n) {
- 
-  se = sqrt(p * (1 - p ) / n)
-  CI_lower = p - 1.96 * se
-  CI_upper = p + 1.96 * se
+  arm =
+    if_else(str_detect(x, "^con"), "control", "experimental")
   
-  tibble(
-  CI_lower,
-  CI_upper
-  )
+  id = 
+    str_extract(x, "\\d{2}")
+  
+data = 
+    read.csv(x) |>
+    janitor::clean_names()|>
+    mutate(arm = arm, id = id)
+    
 }
 
-CI(p = 0.6455607, n = 2827)
+output = 
+  map(file_list, load_files) 
+
+combined_df = 
+  bind_rows(output)
 ```
+
 
