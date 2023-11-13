@@ -102,7 +102,6 @@ combined_df =
 combined_df |>
   mutate(arm_id = paste(arm, id, sep = "-")) |>
   ggplot(aes(x = weeks, y = values, group = arm_id, color = arm)) +
-  geom_point() +
   geom_line() +
     labs(title = "Plot of Observations Over Time",
        x = "Weeks",
@@ -110,8 +109,26 @@ combined_df |>
        color = "Group")
 ```
 
-```{r}
+## Comment
+In general, the experimental group has a higher values compared to control group.
 
+
+# Problem 3
+
+## Set design elements
+```{r}
+sim = function(n = 30, mu = 0, sigma = 5) {
+  
+  sim_data = tibble(
+    x = rnorm(n = n, mean = mu, sd = sigma),
+  )
+  
+  sim_data |> 
+    summarize(
+      mu_hat = mean(x),
+      sigma_hat = sd(x)
+    )
+}
 
 ```
 
