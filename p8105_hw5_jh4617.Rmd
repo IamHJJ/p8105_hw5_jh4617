@@ -63,6 +63,8 @@ homicide_df |>
 
 
 # Problem 2
+
+## Imported and combined files 
 ```{r}
 
 file_list = 
@@ -71,7 +73,7 @@ file_list =
 load_files = function(x){
   
   arm =
-    if_else(str_detect(x, "^con"), "control", "experimental")
+    str_extract(x, "con|exp")
   
   id = 
     str_extract(x, "\\d{2}")
@@ -87,7 +89,29 @@ output =
   map(file_list, load_files) 
 
 combined_df = 
-  bind_rows(output)
+  bind_rows(output) |>
+  pivot_longer(
+    week_1:week_8,
+    names_to = "weeks",
+    values_to = "values"
+  )
 ```
 
+## Made a spaghetti plot
+```{r}
+combined_df |>
+  mutate(arm_id = paste(arm, id, sep = "-")) |>
+  ggplot(aes(x = weeks, y = values, group = arm_id, color = arm)) +
+  geom_point() +
+  geom_line() +
+    labs(title = "Plot of Observations Over Time",
+       x = "Weeks",
+       y = "Values",
+       color = "Group")
+```
+
+```{r}
+
+
+```
 
