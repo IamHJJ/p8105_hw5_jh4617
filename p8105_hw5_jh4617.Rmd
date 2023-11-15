@@ -161,7 +161,7 @@ sim = function(mu) {
 
 ```{r}
 sim_results = function(mu) {
-  expand_grid(mu = 0, iter = 1:5000) |> 
+  expand_grid(mu, iter = 1:5000) |> 
   mutate(estimate_df = map(mu, sim)) |> 
   unnest(estimate_df) }
 
@@ -175,6 +175,28 @@ mu_df = 0:6
 mu_sim_result_df =
   map(mu_df, sim_results) |>
   bind_rows()
+```
+
+
+```{r}
+mu_sim_result_df |>
+  filter(p_value <= 0.05)
+  
+```
+
+## Plots True mean versus Mean of mean_hat
+```{r}
+mu_sim_result_df |>
+  group_by(mu) |>
+  summarize(mean = mean(mean_hat)) |>
+  ggplot(aes(x = mu, y = mean)) +
+  geom_point() +
+  geom_smooth()
+```
+
+##
+```{r}
+
 ```
 
 
