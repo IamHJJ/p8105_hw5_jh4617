@@ -130,7 +130,7 @@ combined_df |>
 ```
 
 ## Comment
-In general, the experimental group has a higher values compared to control group.
+The experimental group has a increase trend, however, the control group have not change.
 
 
 # Problem 3
@@ -144,7 +144,7 @@ sim = function(mu) {
     x = rnorm(n = 30, mean = mu, sd = 5)
 
     t_result = 
-      t.test(x, mu = mu) |>
+      t.test(x, mu = 0) |>
       broom::tidy()
     
     sim_df =
@@ -159,44 +159,53 @@ sim = function(mu) {
 
 ```
 
+
 ```{r}
-sim_results = function(mu) {
-  expand_grid(mu, iter = 1:5000) |> 
-  mutate(estimate_df = map(mu, sim)) |> 
-  unnest(estimate_df) }
-
-```
-
-
-## Repeated i mu = {0,1,2,3,4,5,6}
-```{r}
-mu_df = 0:6
-
-mu_sim_result_df =
-  map(mu_df, sim_results) |>
+sim_results = 
+  expand_grid(mu_value = 0:6, iter = 1:5000) |> 
+  mutate(estimate_df = map(mu_value, sim)) |> 
+  unnest(estimate_df) |>
   bind_rows()
+
 ```
 
 
+## Power versus Effect Size
 ```{r}
-mu_sim_result_df |>
-  filter(p_value <= 0.05)
-  
-```
-
-## Plots True mean versus Mean of mean_hat
-```{r}
-mu_sim_result_df |>
-  group_by(mu) |>
-  summarize(mean = mean(mean_hat)) |>
-  ggplot(aes(x = mu, y = mean)) +
+sim_results |>
+  group_by(mu_value)|>
+  summarize(
+    proportion = mean(p_value < 0.05))|>
+  ggplot(aes(x = mu_value, y = proportion)) +
   geom_point() +
-  geom_smooth()
+  geom_smooth() +
+   labs(title = "Power versus Effect Size",
+       x = "True Value of μ",
+       y = "Proportion") +
+  theme_minimal()
 ```
 
-##
-```{r}
 
+The sample average of mu_hat across test for which the null is rejected is different from the true value of mu. This is because the 
+
+```{r}
+test = 
+  sim_results|>
+  group_by(mu_value)|>
+  summarize(rejected = mean(p_value < 0.05),
+            mean = mean(mean_hat),
+            mean_rejected = mean(mean_hat[p_value < 0.05]))
+
+ggplot(test, aes(x = mu_value)) +
+  geom_point(aes(y = mean, color = "Average estimated mu")) +
+  geom_smooth(aes(y = mean, color = "Average estimated mu")) +
+  geom_point(aes(y = mean_rejected, color = "Average estimated mu when null is rejected")) +
+  geom_smooth(aes(y = mean_rejected, color = "Average estimated mu when null is rejected")) +
+  labs(title = "The Average of Estimated mu",
+       x = "True Value of mu",
+       y = "Average of Estimated mu",
+       color = "Legend") +
+  theme(legend.position = "bottom") 
 ```
 
 
