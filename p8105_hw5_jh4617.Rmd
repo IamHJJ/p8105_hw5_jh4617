@@ -130,7 +130,7 @@ combined_df |>
 ```
 
 ## Comment
-The experimental group has a increase trend, however, the control group have not change.
+The values of experimental group has a increased trend, however, the trend of control group's value is unchanged.
 
 
 # Problem 3
@@ -185,8 +185,8 @@ sim_results |>
   theme_minimal()
 ```
 
+When alpha and sample size remain the same, the effect size is positively associated with the power. In another word, the larger the effect size the easier to detect. 
 
-The sample average of mu_hat across test for which the null is rejected is different from the true value of mu. This is because the 
 
 ```{r}
 test = 
@@ -208,4 +208,4 @@ ggplot(test, aes(x = mu_value)) +
   theme(legend.position = "bottom") 
 ```
 
-
+The average of total estimated mu is approximately y = x. The average of estimated mu when null is rejected is slightly different from the average of total estimated mu, since the estimated mu when null is rejected introduce biases.
