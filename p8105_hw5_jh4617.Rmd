@@ -10,7 +10,6 @@ editor_options:
 ```{r echo = FALSE}
 library(tidyverse)
 library(purrr)
-library(rvest)
 ```
 
 # Problem 1
@@ -20,7 +19,8 @@ library(rvest)
 homicide_df =
   read.csv("homicide-data.csv")|>
   janitor::clean_names() |>
-  mutate(city_state = paste(city, state, sep = ","))
+  mutate(city_state = paste(city, state, sep = ",")) |>
+  filter(city_state != "Tulsa,AL") 
 ```
 
 The raw data obtains `r nrow(homicide_df)` observations and `r ncol(homicide_df)` variables, including `r names(homicide_df)`.
@@ -42,23 +42,43 @@ homicide_df |>
 ## Estimated the proportion of homicide that are unsolved
 ```{r}
 
-homicide_df |>
-  filter(city_state == "Baltimore,MD") |>
+city_homicide_df = 
+  homicide_df |>
+  group_by(city, city_state) |>
   summarize(unsolved = sum(disposition %in% c("Closed without arrest", "Open/No arrest")),
-            total = n()) %>%
-  {prop.test(.$unsolved, .$total)} |>
-  broom::tidy()
+            total = n())
+
+baltimore_test_df = 
+  prop.test( 
+    x = filter(city_homicide_df, city_state == "Baltimore,MD") %>% pull(unsolved),
+    n = filter(city_homicide_df, city_state == "Baltimore,MD") %>% pull(total)) 
+
+  broom::tidy(baltimore_test_df)
 
 ```
 
 ## Proportion for each cities
 ```{r}
-homicide_df |>
-  group_by(city) |>
-  summarize(unsolved = sum(disposition %in% c("Closed without arrest", "Open/No arrest")),
-            total = n()) %>%
-  {prop.test(.$unsolved, .$total)} |>
-  broom::tidy()
+test_results = 
+  city_homicide_df |> 
+  ungroup()|>
+  mutate(
+    prop_tests = map2(unsolved, total, \(x, y) prop.test(x = x, n = y)),
+    tidy_tests = map(prop_tests, broom::tidy)) |> 
+  select(-prop_tests) |>
+  unnest(tidy_tests) |>
+  select(city_state, estimate, conf.low, conf.high) |>
+  mutate(city_state = fct_reorder(city_state, estimate))
+```
+
+Create plots
+```{r}
+test_results |>
+  mutate(city_state = fct_reorder(city_state, estimate)) |>
+  ggplot(aes(x = city_state, y = estimate)) + 
+  geom_point() + 
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 
@@ -121,12 +141,14 @@ sim = function(n = 30, mu = 0, sigma = 5) {
 
     x = rnorm(n = n, mean = mu, sd = sigma)
 
-    t_result = t.test(x, mu = mu)
+    t_result = 
+      t.test(x, mu = mu) |>
+      broom::tidy()
     
     sim_df =
       tibble(
-        t_value_hat = t_result$statistic,
-        p_value_hat = t_result$p.value,
+        t_value = t_result$statistic,
+        p_value = t_result$p.value,
         mean_hat = mean(x),
         sd_hat = sd(x)
       )
@@ -149,4 +171,8 @@ sim_results_df =
 head(sim_results_df)
 ```
 
+## Repeated i mu = {1,2,3,4,5,6}
+```{r}
+
+```
 
